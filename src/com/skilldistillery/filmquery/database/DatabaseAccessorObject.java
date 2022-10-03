@@ -33,7 +33,7 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 
 		try {
 			Connection conn = DriverManager.getConnection(URL, USR, PASS);
-			String sql = "SELECT * FROM film JOIN film_category fc ON film.id = fc.film_id JOIN category cat ON fc.category_id = cat.id WHERE id = ?";
+			String sql = "SELECT * FROM film JOIN film_category fc ON film.id = fc.film_id JOIN category cat ON fc.category_id = cat.id WHERE film.id = ?";
 
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, filmId);
@@ -195,7 +195,7 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 		Film workingFilm = null, testFilm;
 		
 		try(Connection conn = DriverManager.getConnection(URL, USR, PASS);){
-			sql = "SELECT * FROM film JOIN film_actor fa ON film.id = fa.film_id JOIN actor act ON fa.actor_id = act.id WHERE film.title LIKE ? OR film.description LIKE ?";
+			sql = "SELECT * FROM film JOIN film_actor fa ON film.id = fa.film_id JOIN actor act ON fa.actor_id = act.id JOIN film_category fc ON film.id = fc.film_id JOIN category cat ON fc.category_id = cat.id WHERE film.title LIKE ? OR film.description LIKE ?";
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			
 			stmt.setString(1, search);
@@ -243,7 +243,9 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 		}
 		
 		//remove the first value (null)
-		returnList.remove(0);
+		if(returnList != null) {
+			returnList.remove(0);
+		}
 		
 		return returnList;
 	}
