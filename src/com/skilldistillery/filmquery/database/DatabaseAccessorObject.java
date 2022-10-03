@@ -1,6 +1,5 @@
 package com.skilldistillery.filmquery.database;
 
-import java.beans.IntrospectionException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,10 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.print.attribute.PrintJobAttribute;
-
-import com.mysql.cj.exceptions.RSAException;
 import com.skilldistillery.filmquery.entities.Actor;
 import com.skilldistillery.filmquery.entities.Film;
 import com.skilldistillery.filmquery.entities.Rating;
@@ -38,7 +33,7 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 
 		try {
 			Connection conn = DriverManager.getConnection(URL, USR, PASS);
-			String sql = "SELECT * FROM film WHERE id = ?";
+			String sql = "SELECT * FROM film JOIN film_category fc ON film.id = fc.film_id JOIN category cat ON fc.category_id = cat.id WHERE id = ?";
 
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, filmId);
@@ -58,40 +53,42 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 				double replacementCost = rs.getDouble("replacement_cost");
 				Rating rating = Rating.valueOf(rs.getString("rating"));
 				String features = rs.getString("special_features");
-
-				film = new Film(id, title, description, releaseYear, languageId, rentalDuration, rentalRate, length,
-						replacementCost, rating, features);
-			}
-			
-			rs.close();
-			stmt.close();
-			conn.close();
-
-			
-			//get the actors for the film
-			sql = "SELECT act.* FROM film JOIN film_actor fa ON film.id = fa.film_id JOIN actor act ON fa.actor_id = act.id WHERE film.id = ?";			
-			List<Actor> cast = new ArrayList<>();
-			
-			
-			conn = DriverManager.getConnection(URL, USR, PASS);
-			stmt = conn.prepareStatement(sql);
-			
-			stmt.setInt(1, filmId);
-			rs = stmt.executeQuery();
-			
-			while(rs.next()) {
-				int id = rs.getInt("id");
-				String firstName = rs.getString("first_name");
-				String lastName = rs.getString("last_name");
+				String category = rs.getString("name");
 				
-				cast.add(new Actor(id, firstName, lastName));
+				film = new Film(id, title, description, releaseYear, languageId, rentalDuration, rentalRate, length,
+						replacementCost, rating, features, category);
 			}
-			
-			film.setCast(cast);
 			
 			rs.close();
 			stmt.close();
 			conn.close();
+
+			if(film != null) {
+				//get the actors for the film
+				sql = "SELECT act.* FROM film JOIN film_actor fa ON film.id = fa.film_id JOIN actor act ON fa.actor_id = act.id WHERE film.id = ?";			
+				List<Actor> cast = new ArrayList<>();
+				
+				
+				conn = DriverManager.getConnection(URL, USR, PASS);
+				stmt = conn.prepareStatement(sql);
+				
+				stmt.setInt(1, filmId);
+				rs = stmt.executeQuery();
+				
+				while(rs.next()) {
+					int id = rs.getInt("id");
+					String firstName = rs.getString("first_name");
+					String lastName = rs.getString("last_name");
+					
+					cast.add(new Actor(id, firstName, lastName));
+				}
+				
+				film.setCast(cast);
+				
+				rs.close();
+				stmt.close();
+				conn.close();
+			}
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -206,7 +203,7 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 			
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next()) {
-				int id = rs.getInt("film.id");
+				int id = rs.getInt("film_id");
 				String title = rs.getString("title");
 				String description = rs.getString("description");
 				int releaseYear = rs.getInt("release_year");
@@ -217,15 +214,16 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 				double replacementCost = rs.getDouble("replacement_cost");
 				Rating rating = Rating.valueOf(rs.getString("rating"));
 				String features = rs.getString("special_features");
+				String category = rs.getString("name");
 				
-				int actorId = rs.getInt("actor.id");
+				int actorId = rs.getInt("actor_id");
 				String firstName = rs.getString("first_name");
-				String lastName = rs.getString("lastName");
+				String lastName = rs.getString("last_name");
 				
 				Actor actor = new Actor(actorId, firstName, lastName);
 				
 				testFilm = new Film(id, title, description, releaseYear, languageId, rentalDuration, rentalRate, length,
-						replacementCost, rating, features);
+						replacementCost, rating, features, category);
 				
 				//first entry will always add a null value to the list, unsure how to fix that
 				//right now
@@ -243,6 +241,9 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 		} catch(SQLException e) {
 			e.printStackTrace();
 		}
+		
+		//remove the first value (null)
+		returnList.remove(0);
 		
 		return returnList;
 	}

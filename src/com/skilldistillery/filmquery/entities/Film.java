@@ -1,5 +1,6 @@
 package com.skilldistillery.filmquery.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,14 +16,17 @@ public class Film {
 	private double replacementCost;
 	private Rating rating;
 	private String features;
+	private String category;
 	
-	private List<Actor> cast;
+	private List<Actor> cast = new ArrayList<>();
 	
 	public Film() {}
 	
-	public Film(int id, String title, String description, int releaseYear, int languageId, int rentalDuration, double rentalRate, int length, double replacementCost, Rating rating, String features) {
+	public Film(int id, String title, String description, int releaseYear, int languageId, int rentalDuration, double rentalRate, int length, 
+			double replacementCost, Rating rating, String features, String category) {
 		this.id = id;
 		this.title = title;
+		this.description = description;
 		this.releaseYear = releaseYear;
 		this.languageId = languageId;
 		this.rentalDuration = rentalDuration;
@@ -31,10 +35,12 @@ public class Film {
 		this.replacementCost = replacementCost;
 		this.rating = rating;
 		this.features = features;
+		this.category = category;
 	}
 
-	public Film(int id, String title, String description, int releaseYear, int languageId, int rentalDuration, double rentalRate, int length, double replacementCost, Rating rating, String features, List<Actor> cast) {
-		this(id, title, description, releaseYear, languageId, rentalDuration, rentalRate, length, replacementCost, rating, features);
+	public Film(int id, String title, String description, int releaseYear, int languageId, int rentalDuration, double rentalRate, int length, 
+			double replacementCost, Rating rating, String features, String category, List<Actor> cast) {
+		this(id, title, description, releaseYear, languageId, rentalDuration, rentalRate, length, replacementCost, rating, features, category);
 		this.cast = cast;
 	}
 
@@ -48,6 +54,14 @@ public class Film {
 	
 	public void setCast(List<Actor> cast) {
 		this.cast = cast;
+	}
+	
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
 	}
 	
 	public int getId() {
@@ -153,7 +167,7 @@ public class Film {
 		if (getClass() != obj.getClass())
 			return false;
 		Film other = (Film) obj;
-		return Objects.equals(cast, other.cast) && Objects.equals(description, other.description)
+		return Objects.equals(description, other.description)
 				&& Objects.equals(features, other.features) && id == other.id && languageId == other.languageId
 				&& length == other.length && rating == other.rating && releaseYear == other.releaseYear
 				&& rentalDuration == other.rentalDuration

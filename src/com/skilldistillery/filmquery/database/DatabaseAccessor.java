@@ -1,9 +1,7 @@
 package com.skilldistillery.filmquery.database;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-
 import com.skilldistillery.filmquery.entities.Actor;
 import com.skilldistillery.filmquery.entities.Film;
 
