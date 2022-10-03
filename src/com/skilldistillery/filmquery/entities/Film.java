@@ -42,6 +42,10 @@ public class Film {
 		return cast;
 	}
 	
+	public void addActor(Actor actor) {
+		cast.add(actor);
+	}
+	
 	public void setCast(List<Actor> cast) {
 		this.cast = cast;
 	}

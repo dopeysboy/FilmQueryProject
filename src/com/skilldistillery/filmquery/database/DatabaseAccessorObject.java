@@ -1,12 +1,19 @@
 package com.skilldistillery.filmquery.database;
 
+import java.beans.IntrospectionException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.print.attribute.PrintJobAttribute;
+
+import com.mysql.cj.exceptions.RSAException;
 import com.skilldistillery.filmquery.entities.Actor;
 import com.skilldistillery.filmquery.entities.Film;
 import com.skilldistillery.filmquery.entities.Rating;
@@ -92,7 +99,36 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 
 		return film;
 	}
+	
+	@Override
+	public Map<Integer, String> getLangs(){
+		Map<Integer, String> returnMap = new HashMap<>();
+		
+		try {
+			Connection conn = DriverManager.getConnection(URL, USR, PASS);
+			String sql = "SELECT * FROM language";
+			
+			PreparedStatement stmt = conn.prepareStatement(sql);
+			
+			ResultSet rs = stmt.executeQuery();
+			
+			while(rs.next()){
+				Integer key = rs.getInt("id");
+				String value = rs.getString("name");
+				returnMap.put(key, value);
+			}
+			
+			rs.close();
+			stmt.close();
+			conn.close();
+			
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
 
+		return returnMap;
+	}
+	
 	@Override
 	public Actor findActorById(int actorId) {
 		Actor actor = null;
@@ -153,4 +189,61 @@ public class DatabaseAccessorObject implements DatabaseAccessor {
 		return returnList;
 	}
 
+	@Override
+	public List<Film> findFilmsByKeyword(String input){
+		List<Film> returnList = new ArrayList<>();
+		String sql;
+		String search = "%" + input + "%";
+		
+		Film workingFilm = null, testFilm;
+		
+		try(Connection conn = DriverManager.getConnection(URL, USR, PASS);){
+			sql = "SELECT * FROM film JOIN film_actor fa ON film.id = fa.film_id JOIN actor act ON fa.actor_id = act.id WHERE film.title LIKE ? OR film.description LIKE ?";
+			PreparedStatement stmt = conn.prepareStatement(sql);
+			
+			stmt.setString(1, search);
+			stmt.setString(2, search);
+			
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next()) {
+				int id = rs.getInt("film.id");
+				String title = rs.getString("title");
+				String description = rs.getString("description");
+				int releaseYear = rs.getInt("release_year");
+				int languageId = rs.getInt("language_id");
+				int rentalDuration = rs.getInt("rental_duration");
+				double rentalRate = rs.getDouble("rental_duration");
+				int length = rs.getInt("length");
+				double replacementCost = rs.getDouble("replacement_cost");
+				Rating rating = Rating.valueOf(rs.getString("rating"));
+				String features = rs.getString("special_features");
+				
+				int actorId = rs.getInt("actor.id");
+				String firstName = rs.getString("first_name");
+				String lastName = rs.getString("lastName");
+				
+				Actor actor = new Actor(actorId, firstName, lastName);
+				
+				testFilm = new Film(id, title, description, releaseYear, languageId, rentalDuration, rentalRate, length,
+						replacementCost, rating, features);
+				
+				//first entry will always add a null value to the list, unsure how to fix that
+				//right now
+				if(workingFilm == null || !workingFilm.equals(testFilm)) {
+					returnList.add(workingFilm);
+					workingFilm = testFilm;
+					workingFilm.addActor(actor);
+				} else {
+					workingFilm.addActor(actor);
+				}
+
+			}
+			returnList.add(workingFilm);
+			
+		} catch(SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return returnList;
+	}
 }
